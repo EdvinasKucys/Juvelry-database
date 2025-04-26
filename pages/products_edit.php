@@ -31,8 +31,11 @@ if ($is_edit_mode) {
         $is_edit_mode = false;
     }
 
-    // Fetch inventory items for this product
-    $inventory_query = "SELECT * FROM sandeliuojama_preke WHERE fk_PREKEid = ?";
+    // Fetch inventory items for this product with manufacturer information
+    $inventory_query = "SELECT sp.*, g.pavadinimas as manufacturer_name 
+                       FROM sandeliuojama_preke sp
+                       JOIN gamintojas g ON sp.fk_GAMINTOJASgamintojo_id = g.gamintojo_id
+                       WHERE sp.fk_PREKEid = ?";
     $stmt = $conn->prepare($inventory_query);
     $stmt->bind_param("s", $product_id);
     $stmt->execute();
@@ -58,6 +61,7 @@ if (isset($_POST['save_product'])) {
     // Get inventory items from form
     $inventory_ids = isset($_POST['inventory_id']) ? $_POST['inventory_id'] : [];
     $inventory_quantities = isset($_POST['inventory_quantity']) ? $_POST['inventory_quantity'] : [];
+    $inventory_manufacturers = isset($_POST['inventory_manufacturer']) ? $_POST['inventory_manufacturer'] : []; // New line
 
     // Start transaction
     $conn->begin_transaction();
@@ -86,10 +90,14 @@ if (isset($_POST['save_product'])) {
             foreach ($inventory_ids as $index => $inv_id) {
                 if (empty($inv_id)) {
                     // This is a new inventory item
-                    if (isset($inventory_quantities[$index]) && $inventory_quantities[$index] !== '') {
-                        $insert_inventory = "INSERT INTO sandeliuojama_preke (kiekis, fk_PREKEid) VALUES (?, ?)";
+                    if (
+                        isset($inventory_quantities[$index]) && $inventory_quantities[$index] !== '' &&
+                        isset($inventory_manufacturers[$index]) && $inventory_manufacturers[$index] !== ''
+                    ) {
+
+                        $insert_inventory = "INSERT INTO sandeliuojama_preke (kiekis, fk_PREKEid, fk_GAMINTOJASgamintojo_id) VALUES (?, ?, ?)";
                         $stmt = $conn->prepare($insert_inventory);
-                        $stmt->bind_param("is", $inventory_quantities[$index], $product_id);
+                        $stmt->bind_param("iss", $inventory_quantities[$index], $product_id, $inventory_manufacturers[$index]);
                         $stmt->execute();
                     }
                 } else {
@@ -102,9 +110,9 @@ if (isset($_POST['save_product'])) {
                         $stmt->execute();
                     } else {
                         // Update this inventory item
-                        $update_inventory = "UPDATE sandeliuojama_preke SET kiekis = ? WHERE id_SANDELIUOJAMA_PREKE = ?";
+                        $update_inventory = "UPDATE sandeliuojama_preke SET kiekis = ?, fk_GAMINTOJASgamintojo_id = ? WHERE id_SANDELIUOJAMA_PREKE = ?";
                         $stmt = $conn->prepare($update_inventory);
-                        $stmt->bind_param("ii", $inventory_quantities[$index], $inv_id);
+                        $stmt->bind_param("isi", $inventory_quantities[$index], $inventory_manufacturers[$index], $inv_id);
                         $stmt->execute();
                     }
                 }
@@ -145,10 +153,14 @@ if (isset($_POST['save_product'])) {
 
             // Process all non-empty inventory quantities
             foreach ($inventory_quantities as $index => $quantity) {
-                if ($quantity !== '' && $quantity !== null && $quantity > 0) {
-                    $insert_inventory = "INSERT INTO sandeliuojama_preke (kiekis, fk_PREKEid) VALUES (?, ?)";
+                if (
+                    $quantity !== '' && $quantity !== null && $quantity > 0 &&
+                    isset($inventory_manufacturers[$index]) && $inventory_manufacturers[$index] !== ''
+                ) {
+
+                    $insert_inventory = "INSERT INTO sandeliuojama_preke (kiekis, fk_PREKEid, fk_GAMINTOJASgamintojo_id) VALUES (?, ?, ?)";
                     $stmt = $conn->prepare($insert_inventory);
-                    $stmt->bind_param("is", $quantity, $product_id);
+                    $stmt->bind_param("iss", $quantity, $product_id, $inventory_manufacturers[$index]);
                     $stmt->execute();
                 }
             }
@@ -175,9 +187,12 @@ if (isset($_POST['save_product'])) {
             $result = $stmt->get_result();
             $product_data = $result->fetch_assoc();
 
-            // Refresh inventory items
+            // Refresh inventory items with manufacturer info
             $inventory_items = [];
-            $inventory_query = "SELECT * FROM sandeliuojama_preke WHERE fk_PREKEid = ?";
+            $inventory_query = "SELECT sp.*, g.pavadinimas as manufacturer_name 
+                               FROM sandeliuojama_preke sp
+                               JOIN gamintojas g ON sp.fk_GAMINTOJASgamintojo_id = g.gamintojo_id
+                               WHERE sp.fk_PREKEid = ?";
             $stmt = $conn->prepare($inventory_query);
             $stmt->bind_param("s", $product_id);
             $stmt->execute();
@@ -291,7 +306,10 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                         </label>
                         <select class="form-select" id="category_id" name="category_id" required>
                             <option value="">Select a category</option>
-                            <?php while ($category = $categories_result->fetch_assoc()): ?>
+                            <?php
+                            $categories_result->data_seek(0); // Reset pointer
+                            while ($category = $categories_result->fetch_assoc()):
+                            ?>
                                 <option value="<?php echo $category['id_KATEGORIJA']; ?>"
                                     <?php echo ($is_edit_mode && $product_data['fk_KATEGORIJAid_KATEGORIJA'] == $category['id_KATEGORIJA']) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($category['pavadinimas']); ?>
@@ -306,7 +324,10 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                         </label>
                         <select class="form-select" id="manufacturer_id" name="manufacturer_id" required>
                             <option value="">Select a manufacturer</option>
-                            <?php while ($manufacturer = $manufacturers_result->fetch_assoc()): ?>
+                            <?php
+                            $manufacturers_result->data_seek(0); // Reset pointer
+                            while ($manufacturer = $manufacturers_result->fetch_assoc()):
+                            ?>
                                 <option value="<?php echo $manufacturer['gamintojo_id']; ?>"
                                     <?php echo ($is_edit_mode && $product_data['fk_GAMINTOJASgamintojo_id'] == $manufacturer['gamintojo_id']) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($manufacturer['pavadinimas']); ?>
@@ -331,12 +352,26 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                         <?php foreach ($inventory_items as $index => $item): ?>
                             <div class="row mb-3 inventory-row">
                                 <input type="hidden" name="inventory_id[]" value="<?php echo $item['id_SANDELIUOJAMA_PREKE']; ?>">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <label class="form-label">Quantity</label>
                                     <input type="number" class="form-control" name="inventory_quantity[]"
                                         value="<?php echo $item['kiekis']; ?>" min="0" required>
                                 </div>
-                                <div class="col-md-6 d-flex align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label">Manufacturer</label>
+                                    <select class="form-select" name="inventory_manufacturer[]" required>
+                                        <?php
+                                        $manufacturers_result->data_seek(0); // Reset pointer
+                                        while ($manufacturer = $manufacturers_result->fetch_assoc()):
+                                            $selected = ($manufacturer['gamintojo_id'] == $item['fk_GAMINTOJASgamintojo_id']) ? 'selected' : '';
+                                        ?>
+                                            <option value="<?php echo $manufacturer['gamintojo_id']; ?>" <?php echo $selected; ?>>
+                                                <?php echo htmlspecialchars($manufacturer['pavadinimas']); ?>
+                                            </option>
+                                        <?php endwhile; ?>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
                                     <div class="form-check me-3">
                                         <input class="form-check-input" type="checkbox" name="delete_inventory[<?php echo $index; ?>]" value="1" id="delete-inventory-<?php echo $index; ?>">
                                         <label class="form-check-label" for="delete-inventory-<?php echo $index; ?>">
@@ -349,11 +384,25 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                     <?php else: ?>
                         <div class="row mb-3 inventory-row">
                             <input type="hidden" name="inventory_id[]" value="">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">Quantity</label>
                                 <input type="number" class="form-control" name="inventory_quantity[]" min="0">
                             </div>
-                            <div class="col-md-6 d-flex align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label">Manufacturer</label>
+                                <select class="form-select" name="inventory_manufacturer[]">
+                                    <option value="">Select manufacturer</option>
+                                    <?php
+                                    $manufacturers_result->data_seek(0); // Reset pointer
+                                    while ($manufacturer = $manufacturers_result->fetch_assoc()):
+                                    ?>
+                                        <option value="<?php echo $manufacturer['gamintojo_id']; ?>">
+                                            <?php echo htmlspecialchars($manufacturer['pavadinimas']); ?>
+                                        </option>
+                                    <?php endwhile; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
                                 <button type="button" class="btn btn-sm btn-danger remove-inventory-row">
                                     <i class="fas fa-trash me-1"></i>Remove
                                 </button>
@@ -382,13 +431,29 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
             const container = document.getElementById('inventory-container');
             const newRow = document.createElement('div');
             newRow.className = 'row mb-3 inventory-row';
+
+            // Create manufacturer options
+            let manufacturerOptions = '<option value="">Select manufacturer</option>';
+            <?php
+            $manufacturers_result->data_seek(0); // Reset pointer
+            while ($manufacturer = $manufacturers_result->fetch_assoc()):
+            ?>
+                manufacturerOptions += `<option value="<?php echo $manufacturer['gamintojo_id']; ?>"><?php echo htmlspecialchars($manufacturer['pavadinimas']); ?></option>`;
+            <?php endwhile; ?>
+
             newRow.innerHTML = `
             <input type="hidden" name="inventory_id[]" value="">
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label class="form-label">Quantity</label>
                 <input type="number" class="form-control" name="inventory_quantity[]" min="0">
             </div>
-            <div class="col-md-6 d-flex align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Manufacturer</label>
+                <select class="form-select" name="inventory_manufacturer[]">
+                    ${manufacturerOptions}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
                 <button type="button" class="btn btn-sm btn-danger remove-inventory-row">
                     <i class="fas fa-trash me-1"></i>Remove
                 </button>

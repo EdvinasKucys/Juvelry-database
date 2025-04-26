@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 26, 2025 at 08:09 PM
+-- Generation Time: Apr 26, 2025 at 08:59 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -43,6 +43,7 @@ INSERT INTO `gamintojas` (`gamintojo_id`, `pavadinimas`, `salis`, `kontaktai`) V
 ('BCVR009', 'Baltijos amatai', 'Latvija', 'sales@balticrafts.lv, +371-67-223344'),
 ('BVLG003', 'Bulgari', 'Italija', 'support@bulgari.com, +39-06-8888-7766'),
 ('CART002', 'Cartier', 'Prancūzija', 'info@cartier.com, +33-1-4455-3322'),
+('GAMR001', 'GAMS', 'GAMland', '+35-3333-2111'),
 ('GCCI007', 'Gucci', 'Italija', 'jewels@gucci.com, +39-055-7592-7010'),
 ('HRMS006', 'Hermès Jewelry', 'Prancūzija', 'jewelry@hermes.com, +33-1-4017-4717'),
 ('LTHR010', 'Lietuviškas paveldas', 'Lietuva', 'orders@ltpaveldas.lt, +370-5-111-2222'),
@@ -67,7 +68,7 @@ CREATE TABLE `kategorija` (
 --
 
 INSERT INTO `kategorija` (`id_KATEGORIJA`, `pavadinimas`, `aprasymas`) VALUES
-(1, 'Žiedai', 'Įvairių tipų juvelyriniai žiedai skirtingoms progoms'),
+(1, 'Žiedai', 'Įvairių tipų juvelyriniai žiedai skirtingoms progomdfasdfadfs'),
 (2, 'Vėriniai', 'Elegantiški vėriniai kasdieniam dėvėjimui ir ypatingoms progoms'),
 (3, 'Apyrankės', 'Stilingos apyrankės, kurios papildo bet kurį aprangos derinį'),
 (4, 'Auskarai', 'Gražūs auskarai nuo sagučių iki kabančių modelių'),
@@ -76,7 +77,9 @@ INSERT INTO `kategorija` (`id_KATEGORIJA`, `pavadinimas`, `aprasymas`) VALUES
 (7, 'Sagės', 'Klasikinės ir modernios sagės bet kuriai progai'),
 (8, 'Kojos papuošalai', 'Subtilūs kojos papuošalai kasdieniam ir iškilmingam dėvėjimui'),
 (9, 'Vestuviniai papuošalai', 'Specialūs papuošalai vestuvių ceremonijai'),
-(10, 'Rinkiniai', 'Suderinti juvelyriniai rinkiniai vieningam įvaizdžiui');
+(10, 'Rinkiniai', 'Suderinti juvelyriniai rinkiniai vieningam įvaizdžiui'),
+(11, 'gamers', ''),
+(12, 'pau', '');
 
 -- --------------------------------------------------------
 
@@ -100,6 +103,7 @@ CREATE TABLE `preke` (
 --
 
 INSERT INTO `preke` (`id`, `pavadinimas`, `aprasymas`, `kaina`, `svoris`, `medziaga`, `fk_GAMINTOJASgamintojo_id`, `fk_KATEGORIJAid_KATEGORIJA`) VALUES
+('paulina', 'haha paulina', 'uiygyuggyvftyiv', 0.01, 0.01, 'skin', 'SWRV005', 12),
 ('PROD0001', 'Deimantinis aukso žiedas', 'Elegantiškas deimantinis žiedas iš aukštos kokybės aukso.', 1299.99, 5.20, 'Auksas', 'TIFF001', 1),
 ('PROD0002', 'Sidabrinis sužadėtuvių žiedas', 'Klasikinis sidabrinis žiedas su mažu deimantu.', 499.99, 4.50, 'Sidabras', 'CART002', 1),
 ('PROD0003', 'Platinos vestuviniai žiedai (pora)', 'Aukščiausios kokybės platinos vestuvinių žiedų pora.', 1899.99, 12.00, 'Platina', 'BVLG003', 1),
@@ -159,7 +163,8 @@ INSERT INTO `preke` (`id`, `pavadinimas`, `aprasymas`, `kaina`, `svoris`, `medzi
 ('PROD0057', 'Deimantų rinkinys ypatingai progai', 'Prabangus rinkinys ypatingoms progoms su deimantais.', 2999.99, 18.70, 'Baltas auksas, Deimantai', 'TIFF001', 10),
 ('PROD0058', 'Vestuvių papuošalų rinkinys', 'Pilnas vestuvinis papuošalų rinkinys nuotakai.', 799.99, 45.00, 'Sidabras, Perlai, Kristalai', 'CART002', 10),
 ('PROD0059', 'Verslo stiliaus rinkinys', 'Elegantiškas rinkinys verslui - sagė ir auskarai.', 299.99, 14.00, 'Sidabras', 'HRMS006', 10),
-('PROD0060', 'Kasdieninio dėvėjimo rinkinys', 'Minimalistinis rinkinys kasdienai.', 199.99, 12.00, 'Sidabras', 'PAND004', 10);
+('PROD0060', 'Kasdieninio dėvėjimo rinkinys', 'Minimalistinis rinkinys kasdienai.', 199.99, 12.00, 'Sidabras', 'PAND004', 10),
+('PROD2424', 'Evelina', 'GAmre', 0.01, 0.01, 'skin', 'GAMR001', 11);
 
 -- --------------------------------------------------------
 
@@ -170,136 +175,106 @@ INSERT INTO `preke` (`id`, `pavadinimas`, `aprasymas`, `kaina`, `svoris`, `medzi
 CREATE TABLE `sandeliuojama_preke` (
   `id_SANDELIUOJAMA_PREKE` int(11) NOT NULL,
   `kiekis` int(11) NOT NULL DEFAULT 0,
-  `fk_PREKEid` varchar(20) NOT NULL
+  `fk_PREKEid` varchar(20) NOT NULL,
+  `fk_GAMINTOJASgamintojo_id` varchar(20) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `sandeliuojama_preke`
 --
 
-INSERT INTO `sandeliuojama_preke` (`id_SANDELIUOJAMA_PREKE`, `kiekis`, `fk_PREKEid`) VALUES
-(1, 5, 'PROD0001'),
-(2, 3, 'PROD0001'),
-(3, 2, 'PROD0001'),
-(4, 10, 'PROD0002'),
-(5, 7, 'PROD0002'),
-(6, 3, 'PROD0002'),
-(7, 2, 'PROD0003'),
-(8, 1, 'PROD0003'),
-(9, 12, 'PROD0004'),
-(10, 8, 'PROD0004'),
-(11, 6, 'PROD0005'),
-(12, 4, 'PROD0005'),
-(13, 15, 'PROD0006'),
-(14, 10, 'PROD0006'),
-(15, 8, 'PROD0007'),
-(16, 5, 'PROD0007'),
-(17, 12, 'PROD0008'),
-(18, 0, 'PROD0008'),
-(19, 15, 'PROD0009'),
-(20, 9, 'PROD0009'),
-(21, 7, 'PROD0010'),
-(22, 3, 'PROD0010'),
-(23, 11, 'PROD0011'),
-(24, 6, 'PROD0011'),
-(25, 4, 'PROD0012'),
-(26, 2, 'PROD0012'),
-(27, 20, 'PROD0013'),
-(28, 8, 'PROD0013'),
-(29, 6, 'PROD0014'),
-(30, 4, 'PROD0014'),
-(31, 9, 'PROD0015'),
-(32, 7, 'PROD0015'),
-(33, 5, 'PROD0016'),
-(34, 3, 'PROD0016'),
-(35, 14, 'PROD0017'),
-(36, 8, 'PROD0017'),
-(37, 12, 'PROD0018'),
-(38, 9, 'PROD0018'),
-(39, 15, 'PROD0019'),
-(40, 12, 'PROD0019'),
-(41, 25, 'PROD0020'),
-(42, 0, 'PROD0020'),
-(43, 18, 'PROD0021'),
-(44, 13, 'PROD0021'),
-(45, 10, 'PROD0022'),
-(46, 5, 'PROD0022'),
-(47, 8, 'PROD0023'),
-(48, 4, 'PROD0023'),
-(49, 22, 'PROD0024'),
-(50, 16, 'PROD0024'),
-(51, 5, 'PROD0025'),
-(52, 3, 'PROD0025'),
-(53, 7, 'PROD0026'),
-(54, 2, 'PROD0026'),
-(55, 10, 'PROD0027'),
-(56, 6, 'PROD0027'),
-(57, 8, 'PROD0028'),
-(58, 5, 'PROD0028'),
-(59, 4, 'PROD0029'),
-(60, 2, 'PROD0029'),
-(61, 6, 'PROD0030'),
-(62, 3, 'PROD0030'),
-(63, 30, 'PROD0031'),
-(64, 15, 'PROD0031'),
-(65, 8, 'PROD0032'),
-(66, 5, 'PROD0032'),
-(67, 12, 'PROD0033'),
-(68, 8, 'PROD0033'),
-(69, 18, 'PROD0034'),
-(70, 10, 'PROD0034'),
-(71, 25, 'PROD0035'),
-(72, 15, 'PROD0035'),
-(73, 20, 'PROD0036'),
-(74, 12, 'PROD0036'),
-(75, 7, 'PROD0037'),
-(76, 4, 'PROD0037'),
-(77, 9, 'PROD0038'),
-(78, 6, 'PROD0038'),
-(79, 11, 'PROD0039'),
-(80, 7, 'PROD0039'),
-(81, 5, 'PROD0040'),
-(82, 3, 'PROD0040'),
-(83, 8, 'PROD0041'),
-(84, 5, 'PROD0041'),
-(85, 12, 'PROD0042'),
-(86, 8, 'PROD0042'),
-(87, 14, 'PROD0043'),
-(88, 8, 'PROD0043'),
-(89, 11, 'PROD0044'),
-(90, 7, 'PROD0044'),
-(91, 9, 'PROD0045'),
-(92, 5, 'PROD0045'),
-(93, 16, 'PROD0046'),
-(94, 10, 'PROD0046'),
-(95, 20, 'PROD0047'),
-(96, 15, 'PROD0047'),
-(97, 13, 'PROD0048'),
-(98, 7, 'PROD0048'),
-(99, 3, 'PROD0049'),
-(100, 2, 'PROD0049'),
-(101, 15, 'PROD0050'),
-(102, 10, 'PROD0050'),
-(103, 8, 'PROD0051'),
-(104, 5, 'PROD0051'),
-(105, 6, 'PROD0052'),
-(106, 4, 'PROD0052'),
-(107, 9, 'PROD0053'),
-(108, 6, 'PROD0053'),
-(109, 12, 'PROD0054'),
-(110, 8, 'PROD0054'),
-(111, 5, 'PROD0055'),
-(112, 3, 'PROD0055'),
-(113, 7, 'PROD0056'),
-(114, 4, 'PROD0056'),
-(115, 2, 'PROD0057'),
-(116, 1, 'PROD0057'),
-(117, 6, 'PROD0058'),
-(118, 3, 'PROD0058'),
-(119, 8, 'PROD0059'),
-(120, 4, 'PROD0059'),
-(121, 10, 'PROD0060'),
-(122, 7, 'PROD0060');
+INSERT INTO `sandeliuojama_preke` (`id_SANDELIUOJAMA_PREKE`, `kiekis`, `fk_PREKEid`, `fk_GAMINTOJASgamintojo_id`) VALUES
+(1, 5, 'PROD0001', 'TIFF001'),
+(2, 3, 'PROD0001', 'CART002'),
+(3, 2, 'PROD0001', 'BVLG003'),
+(4, 10, 'PROD0002', 'CART002'),
+(5, 7, 'PROD0002', 'TIFF001'),
+(6, 3, 'PROD0002', 'SWRV005'),
+(7, 2, 'PROD0003', 'BVLG003'),
+(8, 1, 'PROD0003', 'TIFF001'),
+(9, 12, 'PROD0004', 'AMYR008'),
+(10, 8, 'PROD0004', 'BCVR009'),
+(11, 6, 'PROD0005', 'CART002'),
+(12, 4, 'PROD0005', 'PAND004'),
+(13, 15, 'PROD0006', 'PAND004'),
+(14, 10, 'PROD0006', 'LTHR010'),
+(15, 8, 'PROD0007', 'PAND004'),
+(16, 5, 'PROD0007', 'AMYR008'),
+(17, 12, 'PROD0008', 'SWRV005'),
+(18, 0, 'PROD0008', 'HRMS006'),
+(19, 15, 'PROD0009', 'AMYR008'),
+(20, 9, 'PROD0009', 'BCVR009'),
+(21, 7, 'PROD0010', 'BVLG003'),
+(22, 3, 'PROD0010', 'GCCI007'),
+(23, 11, 'PROD0011', 'SWRV005'),
+(24, 6, 'PROD0011', 'TIFF001'),
+(25, 4, 'PROD0012', 'TIFF001'),
+(26, 2, 'PROD0012', 'CART002'),
+(27, 20, 'PROD0013', 'HRMS006'),
+(28, 8, 'PROD0013', 'GCCI007'),
+(29, 6, 'PROD0014', 'GCCI007'),
+(30, 4, 'PROD0014', 'CART002'),
+(31, 9, 'PROD0015', 'AMYR008'),
+(32, 7, 'PROD0015', 'LTHR010'),
+(33, 5, 'PROD0016', 'CART002'),
+(34, 3, 'PROD0016', 'TIFF001'),
+(35, 14, 'PROD0017', 'PAND004'),
+(36, 8, 'PROD0017', 'BVLG003'),
+(37, 12, 'PROD0018', 'SWRV005'),
+(38, 9, 'PROD0018', 'BCVR009'),
+(39, 15, 'PROD0019', 'TIFF001'),
+(40, 12, 'PROD0019', 'CART002'),
+(41, 25, 'PROD0020', 'CART002'),
+(42, 0, 'PROD0020', 'SWRV005'),
+(43, 18, 'PROD0021', 'AMYR008'),
+(44, 13, 'PROD0021', 'PAND004'),
+(45, 10, 'PROD0022', 'PAND004'),
+(46, 5, 'PROD0022', 'HRMS006'),
+(47, 8, 'PROD0023', 'BVLG003'),
+(48, 4, 'PROD0023', 'GCCI007'),
+(49, 22, 'PROD0024', 'HRMS006'),
+(50, 16, 'PROD0024', 'BCVR009'),
+(51, 5, 'PROD0025', 'SWRV005'),
+(52, 3, 'PROD0025', 'LTHR010'),
+(53, 7, 'PROD0026', 'CART002'),
+(54, 2, 'PROD0026', 'TIFF001'),
+(55, 10, 'PROD0027', 'BVLG003'),
+(56, 6, 'PROD0027', 'PAND004'),
+(57, 8, 'PROD0028', 'TIFF001'),
+(58, 5, 'PROD0028', 'HRMS006'),
+(59, 4, 'PROD0029', 'BCVR009'),
+(60, 2, 'PROD0029', 'AMYR008'),
+(61, 6, 'PROD0030', 'LTHR010'),
+(62, 3, 'PROD0030', 'GCCI007'),
+(63, 30, 'PROD0031', 'PAND004'),
+(64, 15, 'PROD0031', 'SWRV005'),
+(65, 8, 'PROD0032', 'AMYR008'),
+(66, 5, 'PROD0032', 'BCVR009'),
+(67, 12, 'PROD0033', 'TIFF001'),
+(68, 8, 'PROD0033', 'CART002'),
+(69, 18, 'PROD0034', 'CART002'),
+(70, 10, 'PROD0034', 'BVLG003'),
+(71, 25, 'PROD0035', 'SWRV005'),
+(72, 15, 'PROD0035', 'PAND004'),
+(73, 20, 'PROD0036', 'GCCI007'),
+(74, 12, 'PROD0036', 'HRMS006'),
+(75, 7, 'PROD0037', 'BCVR009'),
+(76, 4, 'PROD0037', 'LTHR010'),
+(77, 9, 'PROD0038', 'LTHR010'),
+(78, 6, 'PROD0038', 'AMYR008'),
+(79, 11, 'PROD0039', 'GCCI007'),
+(80, 7, 'PROD0039', 'SWRV005'),
+(81, 5, 'PROD0040', 'BVLG003'),
+(82, 3, 'PROD0040', 'TIFF001'),
+(83, 8, 'PROD0041', 'CART002'),
+(84, 5, 'PROD0041', 'PAND004'),
+(85, 12, 'PROD0042', 'PAND004'),
+(86, 8, 'PROD0042', 'HRMS006'),
+(87, 2, 'PROD2424', 'PAND004'),
+(88, 3, 'PROD2424', 'GCCI007'),
+(89, 12, 'PROD2424', 'GAMR001'),
+(90, 2, 'paulina', 'SWRV005'),
+(91, 1, 'paulina', 'PAND004');
 
 --
 -- Indexes for dumped tables
@@ -330,7 +305,8 @@ ALTER TABLE `preke`
 --
 ALTER TABLE `sandeliuojama_preke`
   ADD PRIMARY KEY (`id_SANDELIUOJAMA_PREKE`),
-  ADD KEY `idx_sandeliuojama_preke_produktas` (`fk_PREKEid`);
+  ADD KEY `idx_sandeliuojama_preke_produktas` (`fk_PREKEid`),
+  ADD KEY `idx_sandeliuojama_preke_gamintojas` (`fk_GAMINTOJASgamintojo_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -340,13 +316,13 @@ ALTER TABLE `sandeliuojama_preke`
 -- AUTO_INCREMENT for table `kategorija`
 --
 ALTER TABLE `kategorija`
-  MODIFY `id_KATEGORIJA` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `id_KATEGORIJA` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `sandeliuojama_preke`
 --
 ALTER TABLE `sandeliuojama_preke`
-  MODIFY `id_SANDELIUOJAMA_PREKE` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=123;
+  MODIFY `id_SANDELIUOJAMA_PREKE` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
 
 --
 -- Constraints for dumped tables
@@ -363,6 +339,7 @@ ALTER TABLE `preke`
 -- Constraints for table `sandeliuojama_preke`
 --
 ALTER TABLE `sandeliuojama_preke`
+  ADD CONSTRAINT `FK_sandeliuojama_preke_gamintojas` FOREIGN KEY (`fk_GAMINTOJASgamintojo_id`) REFERENCES `gamintojas` (`gamintojo_id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `FK_sandeliuojama_preke_preke` FOREIGN KEY (`fk_PREKEid`) REFERENCES `preke` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 

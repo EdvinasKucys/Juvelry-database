@@ -45,9 +45,11 @@ if(isset($_GET['delete'])) {
 }
 
 // Fetch products with category and manufacturer info
+// Updated to show total stock and manufacturer count for each product
 $query = "SELECT p.id, p.pavadinimas as product_name, p.kaina, p.medziaga, 
           k.pavadinimas as category_name, g.pavadinimas as manufacturer_name,
-          (SELECT SUM(kiekis) FROM sandeliuojama_preke WHERE fk_PREKEid = p.id) as total_stock
+          (SELECT SUM(kiekis) FROM sandeliuojama_preke WHERE fk_PREKEid = p.id) as total_stock,
+          (SELECT COUNT(DISTINCT fk_GAMINTOJASgamintojo_id) FROM sandeliuojama_preke WHERE fk_PREKEid = p.id) as manufacturer_count
           FROM preke p 
           JOIN kategorija k ON p.fk_KATEGORIJAid_KATEGORIJA = k.id_KATEGORIJA
           JOIN gamintojas g ON p.fk_GAMINTOJASgamintojo_id = g.gamintojo_id
@@ -79,8 +81,9 @@ $result = $conn->query($query);
                 <th>Price</th>
                 <th>Material</th>
                 <th>Category</th>
-                <th>Manufacturer</th>
+                <th>Product Mfr.</th>
                 <th>Total Stock</th>
+                <th>Mfr. Count</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -95,6 +98,7 @@ $result = $conn->query($query);
                         <td><?php echo htmlspecialchars($row['category_name']); ?></td>
                         <td><?php echo htmlspecialchars($row['manufacturer_name']); ?></td>
                         <td><?php echo htmlspecialchars($row['total_stock'] ?? 0); ?></td>
+                        <td><?php echo htmlspecialchars($row['manufacturer_count'] ?? 0); ?></td>
                         <td>
                             <a href="products_edit.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-warning">Edit</a>
                             <a href="products.php?delete=<?php echo $row['id']; ?>" class="btn btn-sm btn-danger" 
@@ -104,10 +108,9 @@ $result = $conn->query($query);
                 <?php endwhile; ?>
             <?php else: ?>
                 <tr>
-                    <td colspan="8" class="text-center">No products found</td>
+                    <td colspan="9" class="text-center">No products found</td>
                 </tr>
             <?php endif; ?>
-
         </tbody>
     </table>
 </div>

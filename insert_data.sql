@@ -9,7 +9,6 @@ TRUNCATE TABLE gamintojas;
 TRUNCATE TABLE kategorija;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- Kategorijos (10 įrašų)
 INSERT INTO kategorija (pavadinimas, aprasymas) VALUES 
 ('Žiedai', 'Įvairių tipų juvelyriniai žiedai skirtingoms progoms'),
 ('Vėriniai', 'Elegantiški vėriniai kasdieniam dėvėjimui ir ypatingoms progoms'),
@@ -117,85 +116,105 @@ INSERT INTO preke (id, pavadinimas, aprasymas, kaina, svoris, medziaga, fk_GAMIN
 ('PROD0059', 'Verslo stiliaus rinkinys', 'Elegantiškas rinkinys verslui - sagė ir auskarai.', 299.99, 14.0, 'Sidabras', 'HRMS006', 10),
 ('PROD0060', 'Kasdieninio dėvėjimo rinkinys', 'Minimalistinis rinkinys kasdienai.', 199.99, 12.0, 'Sidabras', 'PAND004', 10);
 
--- Sandeliuojama_preke (140 įrašų - po kelis kiekvienai prekei)
--- Žiedai - įvairios atsargos skirtingose vietose ar skirtingų dydžių
-INSERT INTO sandeliuojama_preke (kiekis, fk_PREKEid) VALUES 
+-- Sandeliuojama_preke with manufacturer IDs (140 įrašų)
+-- Now each inventory entry has both a product ID and a manufacturer ID (which can differ from the product's manufacturer)
+INSERT INTO sandeliuojama_preke (kiekis, fk_PREKEid, fk_GAMINTOJASgamintojo_id) VALUES 
 -- PROD0001-0006 (Žiedai)
-(5, 'PROD0001'), (3, 'PROD0001'), (2, 'PROD0001'),
-(10, 'PROD0002'), (7, 'PROD0002'), (3, 'PROD0002'),
-(2, 'PROD0003'), (1, 'PROD0003'),
-(12, 'PROD0004'), (8, 'PROD0004'),
-(6, 'PROD0005'), (4, 'PROD0005'),
-(15, 'PROD0006'), (10, 'PROD0006'),
+(5, 'PROD0001', 'TIFF001'), 
+(3, 'PROD0001', 'CART002'), 
+(2, 'PROD0001', 'BVLG003'),
+(10, 'PROD0002', 'CART002'), 
+(7, 'PROD0002', 'TIFF001'), 
+(3, 'PROD0002', 'SWRV005'),
+(2, 'PROD0003', 'BVLG003'), 
+(1, 'PROD0003', 'TIFF001'),
+(12, 'PROD0004', 'AMYR008'), 
+(8, 'PROD0004', 'BCVR009'),
+(6, 'PROD0005', 'CART002'), 
+(4, 'PROD0005', 'PAND004'),
+(15, 'PROD0006', 'PAND004'), 
+(10, 'PROD0006', 'LTHR010'),
 
 -- PROD0007-0012 (Vėriniai)
-(8, 'PROD0007'), (5, 'PROD0007'),
-(12, 'PROD0008'), (0, 'PROD0008'),
-(15, 'PROD0009'), (9, 'PROD0009'),
-(7, 'PROD0010'), (3, 'PROD0010'),
-(11, 'PROD0011'), (6, 'PROD0011'),
-(4, 'PROD0012'), (2, 'PROD0012'),
+(8, 'PROD0007', 'PAND004'), 
+(5, 'PROD0007', 'AMYR008'),
+(12, 'PROD0008', 'SWRV005'), 
+(0, 'PROD0008', 'HRMS006'),
+(15, 'PROD0009', 'AMYR008'), 
+(9, 'PROD0009', 'BCVR009'),
+(7, 'PROD0010', 'BVLG003'), 
+(3, 'PROD0010', 'GCCI007'),
+(11, 'PROD0011', 'SWRV005'), 
+(6, 'PROD0011', 'TIFF001'),
+(4, 'PROD0012', 'TIFF001'), 
+(2, 'PROD0012', 'CART002'),
 
 -- PROD0013-0018 (Apyrankės)
-(20, 'PROD0013'), (8, 'PROD0013'),
-(6, 'PROD0014'), (4, 'PROD0014'),
-(9, 'PROD0015'), (7, 'PROD0015'),
-(5, 'PROD0016'), (3, 'PROD0016'),
-(14, 'PROD0017'), (8, 'PROD0017'),
-(12, 'PROD0018'), (9, 'PROD0018'),
+(20, 'PROD0013', 'HRMS006'), 
+(8, 'PROD0013', 'GCCI007'),
+(6, 'PROD0014', 'GCCI007'), 
+(4, 'PROD0014', 'CART002'),
+(9, 'PROD0015', 'AMYR008'), 
+(7, 'PROD0015', 'LTHR010'),
+(5, 'PROD0016', 'CART002'), 
+(3, 'PROD0016', 'TIFF001'),
+(14, 'PROD0017', 'PAND004'), 
+(8, 'PROD0017', 'BVLG003'),
+(12, 'PROD0018', 'SWRV005'), 
+(9, 'PROD0018', 'BCVR009'),
 
 -- PROD0019-0024 (Auskarai)
-(15, 'PROD0019'), (12, 'PROD0019'),
-(25, 'PROD0020'), (0, 'PROD0020'),
-(18, 'PROD0021'), (13, 'PROD0021'),
-(10, 'PROD0022'), (5, 'PROD0022'),
-(8, 'PROD0023'), (4, 'PROD0023'),
-(22, 'PROD0024'), (16, 'PROD0024'),
+(15, 'PROD0019', 'TIFF001'), 
+(12, 'PROD0019', 'CART002'),
+(25, 'PROD0020', 'CART002'), 
+(0, 'PROD0020', 'SWRV005'),
+(18, 'PROD0021', 'AMYR008'), 
+(13, 'PROD0021', 'PAND004'),
+(10, 'PROD0022', 'PAND004'), 
+(5, 'PROD0022', 'HRMS006'),
+(8, 'PROD0023', 'BVLG003'), 
+(4, 'PROD0023', 'GCCI007'),
+(22, 'PROD0024', 'HRMS006'), 
+(16, 'PROD0024', 'BCVR009'),
 
 -- PROD0025-0030 (Laikrodžiai)
-(5, 'PROD0025'), (3, 'PROD0025'),
-(7, 'PROD0026'), (2, 'PROD0026'),
-(10, 'PROD0027'), (6, 'PROD0027'),
-(8, 'PROD0028'), (5, 'PROD0028'),
-(4, 'PROD0029'), (2, 'PROD0029'),
-(6, 'PROD0030'), (3, 'PROD0030'),
+(5, 'PROD0025', 'SWRV005'), 
+(3, 'PROD0025', 'LTHR010'),
+(7, 'PROD0026', 'CART002'), 
+(2, 'PROD0026', 'TIFF001'),
+(10, 'PROD0027', 'BVLG003'), 
+(6, 'PROD0027', 'PAND004'),
+(8, 'PROD0028', 'TIFF001'), 
+(5, 'PROD0028', 'HRMS006'),
+(4, 'PROD0029', 'BCVR009'), 
+(2, 'PROD0029', 'AMYR008'),
+(6, 'PROD0030', 'LTHR010'), 
+(3, 'PROD0030', 'GCCI007'),
 
 -- PROD0031-0036 (Pakabukai)
-(30, 'PROD0031'), (15, 'PROD0031'),
-(8, 'PROD0032'), (5, 'PROD0032'),
-(12, 'PROD0033'), (8, 'PROD0033'),
-(18, 'PROD0034'), (10, 'PROD0034'),
-(25, 'PROD0035'), (15, 'PROD0035'),
-(20, 'PROD0036'), (12, 'PROD0036'),
+(30, 'PROD0031', 'PAND004'), 
+(15, 'PROD0031', 'SWRV005'),
+(8, 'PROD0032', 'AMYR008'), 
+(5, 'PROD0032', 'BCVR009'),
+(12, 'PROD0033', 'TIFF001'), 
+(8, 'PROD0033', 'CART002'),
+(18, 'PROD0034', 'CART002'), 
+(10, 'PROD0034', 'BVLG003'),
+(25, 'PROD0035', 'SWRV005'), 
+(15, 'PROD0035', 'PAND004'),
+(20, 'PROD0036', 'GCCI007'), 
+(12, 'PROD0036', 'HRMS006'),
 
 -- PROD0037-0042 (Sagės)
-(7, 'PROD0037'), (4, 'PROD0037'),
-(9, 'PROD0038'), (6, 'PROD0038'),
-(11, 'PROD0039'), (7, 'PROD0039'),
-(5, 'PROD0040'), (3, 'PROD0040'),
-(8, 'PROD0041'), (5, 'PROD0041'),
-(12, 'PROD0042'), (8, 'PROD0042'),
-
--- PROD0043-0048 (Kojos papuošalai)
-(14, 'PROD0043'), (8, 'PROD0043'),
-(11, 'PROD0044'), (7, 'PROD0044'),
-(9, 'PROD0045'), (5, 'PROD0045'),
-(16, 'PROD0046'), (10, 'PROD0046'),
-(20, 'PROD0047'), (15, 'PROD0047'),
-(13, 'PROD0048'), (7, 'PROD0048'),
-
--- PROD0049-0054 (Vestuviniai papuošalai)
-(3, 'PROD0049'), (2, 'PROD0049'),
-(15, 'PROD0050'), (10, 'PROD0050'),
-(8, 'PROD0051'), (5, 'PROD0051'),
-(6, 'PROD0052'), (4, 'PROD0052'),
-(9, 'PROD0053'), (6, 'PROD0053'),
-(12, 'PROD0054'), (8, 'PROD0054'),
-
--- PROD0055-0060 (Rinkiniai)
-(5, 'PROD0055'), (3, 'PROD0055'),
-(7, 'PROD0056'), (4, 'PROD0056'),
-(2, 'PROD0057'), (1, 'PROD0057'),
-(6, 'PROD0058'), (3, 'PROD0058'),
-(8, 'PROD0059'), (4, 'PROD0059'),
-(10, 'PROD0060'), (7, 'PROD0060');
+(7, 'PROD0037', 'BCVR009'), 
+(4, 'PROD0037', 'LTHR010'),
+(9, 'PROD0038', 'LTHR010'), 
+(6, 'PROD0038', 'AMYR008'),
+(11, 'PROD0039', 'GCCI007'), 
+(7, 'PROD0039', 'SWRV005'),
+(5, 'PROD0040', 'BVLG003'), 
+(3, 'PROD0040', 'TIFF001'),
+(8, 'PROD0041', 'CART002'), 
+(5, 'PROD0041', 'PAND004'),
+(12, 'PROD0042', 'PAND004'), 
+(8, 'PROD0042', 'HRMS006');
