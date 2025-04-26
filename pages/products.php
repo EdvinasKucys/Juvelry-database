@@ -2,10 +2,7 @@
 include '../includes/header.php';
 include '../includes/db_connect.php';
 
-// Replace the existing delete handling code in products.php with this improved version
-// Find the section near the beginning of the file that looks like:
-// if(isset($_GET['delete'])) { ... }
-
+// Handle delete request
 if(isset($_GET['delete'])) {
     $id_to_delete = $_GET['delete'];
     
@@ -46,14 +43,14 @@ if(isset($_GET['delete'])) {
         $delete_error = "Error deleting product: " . $e->getMessage();
     }
 }
+
 // Fetch products with category and manufacturer info
 $query = "SELECT p.id, p.pavadinimas as product_name, p.kaina, p.medziaga, 
           k.pavadinimas as category_name, g.pavadinimas as manufacturer_name,
-          IFNULL(sp.kiekis, 0) as stock_quantity
+          (SELECT SUM(kiekis) FROM sandeliuojama_preke WHERE fk_PREKEid = p.id) as total_stock
           FROM preke p 
           JOIN kategorija k ON p.fk_KATEGORIJAid_KATEGORIJA = k.id_KATEGORIJA
           JOIN gamintojas g ON p.fk_GAMINTOJASgamintojo_id = g.gamintojo_id
-          LEFT JOIN sandeliuojama_preke sp ON p.id = sp.fk_PREKEid
           ORDER BY p.id";
           
 $result = $conn->query($query);
@@ -83,7 +80,7 @@ $result = $conn->query($query);
                 <th>Material</th>
                 <th>Category</th>
                 <th>Manufacturer</th>
-                <th>Stock</th>
+                <th>Total Stock</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -97,7 +94,7 @@ $result = $conn->query($query);
                         <td><?php echo htmlspecialchars($row['medziaga']); ?></td>
                         <td><?php echo htmlspecialchars($row['category_name']); ?></td>
                         <td><?php echo htmlspecialchars($row['manufacturer_name']); ?></td>
-                        <td><?php echo htmlspecialchars($row['stock_quantity']); ?></td>
+                        <td><?php echo htmlspecialchars($row['total_stock'] ?? 0); ?></td>
                         <td>
                             <a href="products_edit.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-warning">Edit</a>
                             <a href="products.php?delete=<?php echo $row['id']; ?>" class="btn btn-sm btn-danger" 

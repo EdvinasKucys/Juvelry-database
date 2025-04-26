@@ -23,26 +23,14 @@ if(isset($_POST['add_inventory'])) {
     $product_id = $_POST['product_id'];
     $quantity = $_POST['quantity'];
     
-    // Check if product already has inventory
-    $check_query = "SELECT COUNT(*) as count FROM sandeliuojama_preke WHERE fk_PREKEid = ?";
-    $check_stmt = $conn->prepare($check_query);
-    $check_stmt->bind_param("s", $product_id);
-    $check_stmt->execute();
-    $result = $check_stmt->get_result();
-    $row = $result->fetch_assoc();
+    $query = "INSERT INTO sandeliuojama_preke (kiekis, fk_PREKEid) VALUES (?, ?)";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("is", $quantity, $product_id);
     
-    if($row['count'] > 0) {
-        $error_message = "This product already has an inventory entry. Please update it instead.";
+    if($stmt->execute()) {
+        $success_message = "Inventory added successfully";
     } else {
-        $query = "INSERT INTO sandeliuojama_preke (kiekis, fk_PREKEid) VALUES (?, ?)";
-        $stmt = $conn->prepare($query);
-        $stmt->bind_param("is", $quantity, $product_id);
-        
-        if($stmt->execute()) {
-            $success_message = "Inventory added successfully";
-        } else {
-            $error_message = "Error adding inventory: " . $conn->error;
-        }
+        $error_message = "Error adding inventory: " . $conn->error;
     }
 }
 
@@ -68,14 +56,12 @@ $query = "SELECT sp.id_SANDELIUOJAMA_PREKE, sp.kiekis, p.id as product_id, p.pav
           JOIN preke p ON sp.fk_PREKEid = p.id
           JOIN kategorija k ON p.fk_KATEGORIJAid_KATEGORIJA = k.id_KATEGORIJA
           JOIN gamintojas g ON p.fk_GAMINTOJASgamintojo_id = g.gamintojo_id
-          ORDER BY sp.id_SANDELIUOJAMA_PREKE";
+          ORDER BY p.id, sp.id_SANDELIUOJAMA_PREKE";
 $result = $conn->query($query);
 
-// Get products without inventory
+// Get all products for dropdown
 $products_query = "SELECT p.id, p.pavadinimas 
                   FROM preke p 
-                  LEFT JOIN sandeliuojama_preke sp ON p.id = sp.fk_PREKEid
-                  WHERE sp.id_SANDELIUOJAMA_PREKE IS NULL
                   ORDER BY p.pavadinimas";
 $products_result = $conn->query($products_query);
 ?>
@@ -148,8 +134,17 @@ $products_result = $conn->query($products_query);
                 </thead>
                 <tbody>
                     <?php if($result->num_rows > 0): ?>
-                        <?php while($row = $result->fetch_assoc()): ?>
-                            <tr>
+                        <?php 
+                        $current_product = '';
+                        $row_class = '';
+                        while($row = $result->fetch_assoc()): 
+                            // Add visual grouping for same product entries
+                            if($current_product != $row['product_id']) {
+                                $current_product = $row['product_id'];
+                                $row_class = ($row_class == '') ? 'table-light' : '';
+                            }
+                        ?>
+                            <tr class="<?php echo $row_class; ?>">
                                 <td><?php echo $row['id_SANDELIUOJAMA_PREKE']; ?></td>
                                 <td><?php echo htmlspecialchars($row['product_name']); ?></td>
                                 <td><?php echo htmlspecialchars($row['category_name']); ?></td>

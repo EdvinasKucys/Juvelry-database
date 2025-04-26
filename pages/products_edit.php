@@ -23,21 +23,21 @@ if ($is_edit_mode) {
     $stmt->bind_param("s", $product_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    
+
     if ($result->num_rows > 0) {
         $product_data = $result->fetch_assoc();
     } else {
         $error_message = "Product not found.";
         $is_edit_mode = false;
     }
-    
+
     // Fetch inventory items for this product
     $inventory_query = "SELECT * FROM sandeliuojama_preke WHERE fk_PREKEid = ?";
     $stmt = $conn->prepare($inventory_query);
     $stmt->bind_param("s", $product_id);
     $stmt->execute();
     $inventory_result = $stmt->get_result();
-    
+
     while ($item = $inventory_result->fetch_assoc()) {
         $inventory_items[] = $item;
     }
@@ -58,14 +58,10 @@ if (isset($_POST['save_product'])) {
     // Get inventory items from form
     $inventory_ids = isset($_POST['inventory_id']) ? $_POST['inventory_id'] : [];
     $inventory_quantities = isset($_POST['inventory_quantity']) ? $_POST['inventory_quantity'] : [];
-    
-    // Debug: Log the inventory data
-    error_log("Inventory IDs: " . print_r($inventory_ids, true));
-    error_log("Inventory Quantities: " . print_r($inventory_quantities, true));
-    
+
     // Start transaction
     $conn->begin_transaction();
-    
+
     try {
         if ($is_edit_mode) {
             // Update existing product
@@ -73,16 +69,21 @@ if (isset($_POST['save_product'])) {
                             svoris = ?, medziaga = ?, fk_GAMINTOJASgamintojo_id = ?, 
                             fk_KATEGORIJAid_KATEGORIJA = ? WHERE id = ?";
             $stmt = $conn->prepare($update_query);
-            $stmt->bind_param("ssddssss", $product_name, $product_description, $product_price, 
-                             $product_weight, $product_material, $manufacturer_id, 
-                             $category_id, $product_id);
+            $stmt->bind_param(
+                "ssddssss",
+                $product_name,
+                $product_description,
+                $product_price,
+                $product_weight,
+                $product_material,
+                $manufacturer_id,
+                $category_id,
+                $product_id
+            );
             $stmt->execute();
-            
+
             // Handle inventory items
             foreach ($inventory_ids as $index => $inv_id) {
-                // Debug
-                error_log("Processing inventory index: $index, ID: $inv_id, Quantity: " . (isset($inventory_quantities[$index]) ? $inventory_quantities[$index] : 'not set'));
-                
                 if (empty($inv_id)) {
                     // This is a new inventory item
                     if (isset($inventory_quantities[$index]) && $inventory_quantities[$index] !== '') {
@@ -90,7 +91,6 @@ if (isset($_POST['save_product'])) {
                         $stmt = $conn->prepare($insert_inventory);
                         $stmt->bind_param("is", $inventory_quantities[$index], $product_id);
                         $stmt->execute();
-                        error_log("Inserted new inventory: " . $inventory_quantities[$index]);
                     }
                 } else {
                     // This is an existing inventory item
@@ -100,18 +100,15 @@ if (isset($_POST['save_product'])) {
                         $stmt = $conn->prepare($delete_inventory);
                         $stmt->bind_param("i", $inv_id);
                         $stmt->execute();
-                        error_log("Deleted inventory ID: " . $inv_id);
                     } else {
                         // Update this inventory item
                         $update_inventory = "UPDATE sandeliuojama_preke SET kiekis = ? WHERE id_SANDELIUOJAMA_PREKE = ?";
                         $stmt = $conn->prepare($update_inventory);
                         $stmt->bind_param("ii", $inventory_quantities[$index], $inv_id);
                         $stmt->execute();
-                        error_log("Updated inventory ID: " . $inv_id . " with quantity: " . $inventory_quantities[$index]);
                     }
                 }
             }
-            
         } else {
             // Check if product ID already exists
             $check_query = "SELECT COUNT(*) as count FROM preke WHERE id = ?";
@@ -120,61 +117,55 @@ if (isset($_POST['save_product'])) {
             $stmt->execute();
             $result = $stmt->get_result();
             $row = $result->fetch_assoc();
-            
+
             if ($row['count'] > 0) {
                 throw new Exception("Product ID already exists. Please use a different ID.");
             }
-            
-            // Insert new product (ONLY ONCE)
+
+            // Insert new product
             $insert_query = "INSERT INTO preke (id, pavadinimas, aprasymas, kaina, svoris, medziaga, 
                             fk_GAMINTOJASgamintojo_id, fk_KATEGORIJAid_KATEGORIJA) 
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($insert_query);
-            $stmt->bind_param("sssddssi", $new_product_id, $product_name, $product_description, 
-                             $product_price, $product_weight, $product_material, 
-                             $manufacturer_id, $category_id);
+            $stmt->bind_param(
+                "sssddssi",
+                $new_product_id,
+                $product_name,
+                $product_description,
+                $product_price,
+                $product_weight,
+                $product_material,
+                $manufacturer_id,
+                $category_id
+            );
             $stmt->execute();
-            
+
             // Set product_id for inventory inserts
             $product_id = $new_product_id;
-            
-            // Debug: Count inventory items being processed
-            error_log("Processing " . count($inventory_quantities) . " inventory items");
-            
-            // Insert new inventory items (after the product is inserted)
-            // Fixed: Make sure we use keys and values explicitly
+
+            // Process all non-empty inventory quantities
             foreach ($inventory_quantities as $index => $quantity) {
-                error_log("Processing inventory index $index with quantity: $quantity");
-                
-                if ($quantity !== '' && $quantity !== null) {
+                if ($quantity !== '' && $quantity !== null && $quantity > 0) {
                     $insert_inventory = "INSERT INTO sandeliuojama_preke (kiekis, fk_PREKEid) VALUES (?, ?)";
                     $stmt = $conn->prepare($insert_inventory);
                     $stmt->bind_param("is", $quantity, $product_id);
-                    $result = $stmt->execute();
-                    
-                    if ($result) {
-                        error_log("Successfully inserted inventory item with quantity: $quantity");
-                    } else {
-                        error_log("Failed to insert inventory item: " . $conn->error);
-                    }
-                } else {
-                    error_log("Skipping empty quantity at index $index");
+                    $stmt->execute();
                 }
             }
         }
-        
+
         // Commit transaction
         $conn->commit();
-        
+
         // Set success message and redirect
         $success_message = "Product saved successfully.";
-        
+
         // Reload page with the saved product ID if we're adding a new product
         if (!$is_edit_mode) {
             header("Location: products_edit.php?id=" . $new_product_id . "&success=1");
             exit;
         }
-        
+
         // Refresh data for edit mode
         if ($is_edit_mode) {
             $product_query = "SELECT * FROM preke WHERE id = ?";
@@ -183,7 +174,7 @@ if (isset($_POST['save_product'])) {
             $stmt->execute();
             $result = $stmt->get_result();
             $product_data = $result->fetch_assoc();
-            
+
             // Refresh inventory items
             $inventory_items = [];
             $inventory_query = "SELECT * FROM sandeliuojama_preke WHERE fk_PREKEid = ?";
@@ -191,17 +182,15 @@ if (isset($_POST['save_product'])) {
             $stmt->bind_param("s", $product_id);
             $stmt->execute();
             $inventory_result = $stmt->get_result();
-            
+
             while ($item = $inventory_result->fetch_assoc()) {
                 $inventory_items[] = $item;
             }
         }
-        
     } catch (Exception $e) {
         // Rollback transaction on error
         $conn->rollback();
         $error_message = "Error: " . $e->getMessage();
-        error_log("Transaction error: " . $e->getMessage());
     }
 }
 
@@ -221,19 +210,19 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
             <i class="fas fa-arrow-left me-1"></i> Back to Products
         </a>
     </div>
-    
+
     <?php if (!empty($success_message)): ?>
         <div class="alert alert-success">
             <i class="fas fa-check-circle me-2"></i><?php echo $success_message; ?>
         </div>
     <?php endif; ?>
-    
+
     <?php if (!empty($error_message)): ?>
         <div class="alert alert-danger">
             <i class="fas fa-exclamation-circle me-2"></i><?php echo $error_message; ?>
         </div>
     <?php endif; ?>
-    
+
     <form method="post" action="">
         <div class="card mb-4 shadow-sm">
             <div class="card-header bg-primary text-white">
@@ -245,57 +234,57 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                         <label for="product_id" class="form-label">
                             <i class="fas fa-fingerprint me-1"></i>Product ID
                         </label>
-                        <input type="text" class="form-control" id="product_id" name="product_id" 
-                               value="<?php echo htmlspecialchars($is_edit_mode ? $product_data['id'] : ''); ?>"
-                               <?php echo $is_edit_mode ? 'readonly' : ''; ?> required>
+                        <input type="text" class="form-control" id="product_id" name="product_id"
+                            value="<?php echo htmlspecialchars($is_edit_mode ? $product_data['id'] : ''); ?>"
+                            <?php echo $is_edit_mode ? 'readonly' : ''; ?> required>
                         <small class="form-text text-muted">Unique identifier for the product</small>
                     </div>
-                    
+
                     <div class="col-md-6 mb-3">
                         <label for="pavadinimas" class="form-label">
                             <i class="fas fa-tag me-1"></i>Name
                         </label>
-                        <input type="text" class="form-control" id="pavadinimas" name="pavadinimas" 
-                               value="<?php echo htmlspecialchars($is_edit_mode ? $product_data['pavadinimas'] : ''); ?>" required>
+                        <input type="text" class="form-control" id="pavadinimas" name="pavadinimas"
+                            value="<?php echo htmlspecialchars($is_edit_mode ? $product_data['pavadinimas'] : ''); ?>" required>
                     </div>
-                    
+
                     <div class="col-md-12 mb-3">
                         <label for="aprasymas" class="form-label">
                             <i class="fas fa-align-left me-1"></i>Description
                         </label>
                         <textarea class="form-control" id="aprasymas" name="aprasymas" rows="3"><?php echo htmlspecialchars($is_edit_mode ? $product_data['aprasymas'] : ''); ?></textarea>
                     </div>
-                    
+
                     <div class="col-md-4 mb-3">
                         <label for="kaina" class="form-label">
                             <i class="fas fa-euro-sign me-1"></i>Price
                         </label>
                         <div class="input-group">
                             <span class="input-group-text">€</span>
-                            <input type="number" class="form-control" id="kaina" name="kaina" step="0.01" min="0" 
-                                   value="<?php echo $is_edit_mode ? $product_data['kaina'] : ''; ?>" required>
+                            <input type="number" class="form-control" id="kaina" name="kaina" step="0.01" min="0"
+                                value="<?php echo $is_edit_mode ? $product_data['kaina'] : ''; ?>" required>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-4 mb-3">
                         <label for="svoris" class="form-label">
                             <i class="fas fa-weight me-1"></i>Weight
                         </label>
                         <div class="input-group">
-                            <input type="number" class="form-control" id="svoris" name="svoris" step="0.01" min="0" 
-                                   value="<?php echo $is_edit_mode ? $product_data['svoris'] : ''; ?>" required>
+                            <input type="number" class="form-control" id="svoris" name="svoris" step="0.01" min="0"
+                                value="<?php echo $is_edit_mode ? $product_data['svoris'] : ''; ?>" required>
                             <span class="input-group-text">g</span>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-4 mb-3">
                         <label for="medziaga" class="form-label">
                             <i class="fas fa-gem me-1"></i>Material
                         </label>
-                        <input type="text" class="form-control" id="medziaga" name="medziaga" 
-                               value="<?php echo htmlspecialchars($is_edit_mode ? $product_data['medziaga'] : ''); ?>">
+                        <input type="text" class="form-control" id="medziaga" name="medziaga"
+                            value="<?php echo htmlspecialchars($is_edit_mode ? $product_data['medziaga'] : ''); ?>">
                     </div>
-                    
+
                     <div class="col-md-6 mb-3">
                         <label for="category_id" class="form-label">
                             <i class="fas fa-list me-1"></i>Category
@@ -303,14 +292,14 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                         <select class="form-select" id="category_id" name="category_id" required>
                             <option value="">Select a category</option>
                             <?php while ($category = $categories_result->fetch_assoc()): ?>
-                                <option value="<?php echo $category['id_KATEGORIJA']; ?>" 
-                                        <?php echo ($is_edit_mode && $product_data['fk_KATEGORIJAid_KATEGORIJA'] == $category['id_KATEGORIJA']) ? 'selected' : ''; ?>>
+                                <option value="<?php echo $category['id_KATEGORIJA']; ?>"
+                                    <?php echo ($is_edit_mode && $product_data['fk_KATEGORIJAid_KATEGORIJA'] == $category['id_KATEGORIJA']) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($category['pavadinimas']); ?>
                                 </option>
                             <?php endwhile; ?>
                         </select>
                     </div>
-                    
+
                     <div class="col-md-6 mb-3">
                         <label for="manufacturer_id" class="form-label">
                             <i class="fas fa-industry me-1"></i>Manufacturer
@@ -318,8 +307,8 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                         <select class="form-select" id="manufacturer_id" name="manufacturer_id" required>
                             <option value="">Select a manufacturer</option>
                             <?php while ($manufacturer = $manufacturers_result->fetch_assoc()): ?>
-                                <option value="<?php echo $manufacturer['gamintojo_id']; ?>" 
-                                        <?php echo ($is_edit_mode && $product_data['fk_GAMINTOJASgamintojo_id'] == $manufacturer['gamintojo_id']) ? 'selected' : ''; ?>>
+                                <option value="<?php echo $manufacturer['gamintojo_id']; ?>"
+                                    <?php echo ($is_edit_mode && $product_data['fk_GAMINTOJASgamintojo_id'] == $manufacturer['gamintojo_id']) ? 'selected' : ''; ?>>
                                     <?php echo htmlspecialchars($manufacturer['pavadinimas']); ?>
                                 </option>
                             <?php endwhile; ?>
@@ -328,7 +317,7 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                 </div>
             </div>
         </div>
-        
+
         <div class="card mb-4 shadow-sm">
             <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                 <span><i class="fas fa-warehouse me-2"></i>Inventory Information</span>
@@ -344,8 +333,8 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                                 <input type="hidden" name="inventory_id[]" value="<?php echo $item['id_SANDELIUOJAMA_PREKE']; ?>">
                                 <div class="col-md-6">
                                     <label class="form-label">Quantity</label>
-                                    <input type="number" class="form-control" name="inventory_quantity[]" 
-                                           value="<?php echo $item['kiekis']; ?>" min="0" required>
+                                    <input type="number" class="form-control" name="inventory_quantity[]"
+                                        value="<?php echo $item['kiekis']; ?>" min="0" required>
                                 </div>
                                 <div class="col-md-6 d-flex align-items-end">
                                     <div class="form-check me-3">
@@ -374,7 +363,7 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
                 </div>
             </div>
         </div>
-        
+
         <div class="d-flex justify-content-between mb-4">
             <button type="submit" name="save_product" class="btn btn-primary">
                 <i class="fas fa-save me-1"></i>Save Product
@@ -387,13 +376,13 @@ if (isset($_GET['success']) && $_GET['success'] == 1) {
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add new inventory row
-    document.getElementById('add-inventory-row').addEventListener('click', function() {
-        const container = document.getElementById('inventory-container');
-        const newRow = document.createElement('div');
-        newRow.className = 'row mb-3 inventory-row';
-        newRow.innerHTML = `
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add new inventory row
+        document.getElementById('add-inventory-row').addEventListener('click', function() {
+            const container = document.getElementById('inventory-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'row mb-3 inventory-row';
+            newRow.innerHTML = `
             <input type="hidden" name="inventory_id[]" value="">
             <div class="col-md-6">
                 <label class="form-label">Quantity</label>
@@ -405,22 +394,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 </button>
             </div>
         `;
-        container.appendChild(newRow);
-        
-        // Add event listener to the new remove button
-        newRow.querySelector('.remove-inventory-row').addEventListener('click', function() {
-            container.removeChild(newRow);
+            container.appendChild(newRow);
+
+            // Add event listener to the new remove button
+            newRow.querySelector('.remove-inventory-row').addEventListener('click', function() {
+                container.removeChild(newRow);
+            });
+        });
+
+        // Remove inventory row
+        document.querySelectorAll('.remove-inventory-row').forEach(button => {
+            button.addEventListener('click', function() {
+                const row = this.closest('.inventory-row');
+                row.parentNode.removeChild(row);
+            });
         });
     });
-    
-    // Remove inventory row
-    document.querySelectorAll('.remove-inventory-row').forEach(button => {
-        button.addEventListener('click', function() {
-            const row = this.closest('.inventory-row');
-            row.parentNode.removeChild(row);
-        });
-    });
-});
 </script>
 
 <?php
