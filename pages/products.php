@@ -2,21 +2,50 @@
 include '../includes/header.php';
 include '../includes/db_connect.php';
 
-// Handle delete request
+// Replace the existing delete handling code in products.php with this improved version
+// Find the section near the beginning of the file that looks like:
+// if(isset($_GET['delete'])) { ... }
+
 if(isset($_GET['delete'])) {
     $id_to_delete = $_GET['delete'];
-    $delete_query = "DELETE FROM preke WHERE id = ?";
-    $stmt = $conn->prepare($delete_query);
-    $stmt->bind_param("s", $id_to_delete);
     
-    if($stmt->execute()) {
-        $delete_message = "Product deleted successfully";
-    } else {
-        $delete_error = "Error deleting product: " . $conn->error;
+    // Start transaction to ensure data integrity
+    $conn->begin_transaction();
+    
+    try {
+        // First delete any inventory records associated with this product
+        $delete_inventory_query = "DELETE FROM sandeliuojama_preke WHERE fk_PREKEid = ?";
+        $stmt = $conn->prepare($delete_inventory_query);
+        $stmt->bind_param("s", $id_to_delete);
+        $stmt->execute();
+        $inventory_affected = $stmt->affected_rows;
+        $stmt->close();
+        
+        // Then delete the product itself
+        $delete_query = "DELETE FROM preke WHERE id = ?";
+        $stmt = $conn->prepare($delete_query);
+        $stmt->bind_param("s", $id_to_delete);
+        $stmt->execute();
+        $product_affected = $stmt->affected_rows;
+        $stmt->close();
+        
+        // Commit the transaction
+        $conn->commit();
+        
+        if($product_affected > 0) {
+            $delete_message = "Product deleted successfully";
+            if($inventory_affected > 0) {
+                $delete_message .= " along with " . $inventory_affected . " inventory records";
+            }
+        } else {
+            $delete_error = "Product not found or already deleted";
+        }
+    } catch (Exception $e) {
+        // Rollback in case of error
+        $conn->rollback();
+        $delete_error = "Error deleting product: " . $e->getMessage();
     }
-    $stmt->close();
 }
-
 // Fetch products with category and manufacturer info
 $query = "SELECT p.id, p.pavadinimas as product_name, p.kaina, p.medziaga, 
           k.pavadinimas as category_name, g.pavadinimas as manufacturer_name,
@@ -81,6 +110,7 @@ $result = $conn->query($query);
                     <td colspan="8" class="text-center">No products found</td>
                 </tr>
             <?php endif; ?>
+
         </tbody>
     </table>
 </div>
