@@ -150,7 +150,7 @@ if (isset($_POST['save_product'])) {
                             fk_GAMINTOJASgamintojo_id, fk_KATEGORIJAid_KATEGORIJA) 
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($insert_query);
-            $stmt->bind_param("sssddsis", $new_product_id, $product_name, $product_description, 
+            $stmt->bind_param("sssddsss", $new_product_id, $product_name, $product_description, 
                              $product_price, $product_weight, $product_material, 
                              $manufacturer_id, $category_id);
             $stmt->execute();
