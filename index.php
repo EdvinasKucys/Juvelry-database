@@ -4,16 +4,16 @@ include 'includes/header.php';
 
 <div class="container mt-5">
     <div class="jumbotron">
-        <h1>Juvelyrikos inventoriaus duomenys</h1>
+        <h1>Jevelry Inventory database</h1>
     </div>
     
     <div class="row">
         <div class="col-md-3">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Kategorijos</h5>
-                    <p class="card-text">Kategorijų peržiūra, sudarimas redagavimas</p>
-                    <a href="/juvelyrika/pages/categories.php" class="btn btn-primary">Atidaryti</a>
+                    <h5 class="card-title">Categories</h5>
+                    <p class="card-text">Category view, deletion, adding, editing</p>
+                    <a href="/juvelyrika/pages/categories.php" class="btn btn-primary">Open</a>
                 </div>
             </div>
         </div>
@@ -21,9 +21,9 @@ include 'includes/header.php';
         <div class="col-md-3">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Gamintojai</h5>
-                    <p class="card-text">gamintojų peržiūra, sudarimas redagavimas</p>
-                    <a href="/juvelyrika/pages/manufacturers.php" class="btn btn-primary">Atidaryti</a>
+                    <h5 class="card-title">Manufacturers</h5>
+                    <p class="card-text">Manufacturer view, deletion, adding, editing</p>
+                    <a href="/juvelyrika/pages/manufacturers.php" class="btn btn-primary">Open</a>
                 </div>
             </div>
         </div>
@@ -32,8 +32,8 @@ include 'includes/header.php';
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Products</h5>
-                    <p class="card-text">View and manage products</p>
-                    <a href="/juvelyrika/pages/products.php" class="btn btn-primary">Atidaryti</a>
+                    <p class="card-text">Product view, deletion, adding, editings</p>
+                    <a href="/juvelyrika/pages/products.php" class="btn btn-primary">Open</a>
                 </div>
             </div>
         </div>
@@ -42,8 +42,8 @@ include 'includes/header.php';
             <div class="card">
                 <div class="card-body">
                     <h5 class="card-title">Inventory</h5>
-                    <p class="card-text">Manage warehouse inventory</p>
-                    <a href="/juvelyrika/pages/inventory.php" class="btn btn-primary">Atidaryti</a>
+                    <p class="card-text">Inventory view, deletion, adding, editing</p>
+                    <a href="/juvelyrika/pages/inventory.php" class="btn btn-primary">Open</a>
                 </div>
             </div>
         </div>
