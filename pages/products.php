@@ -70,7 +70,6 @@ $result = $conn->query($query);
                         <td><?php echo htmlspecialchars($row['manufacturer_name']); ?></td>
                         <td><?php echo htmlspecialchars($row['stock_quantity']); ?></td>
                         <td>
-                            <a href="product_view.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-info">View</a>
                             <a href="products_edit.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-warning">Edit</a>
                             <a href="products.php?delete=<?php echo $row['id']; ?>" class="btn btn-sm btn-danger" 
                                onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>

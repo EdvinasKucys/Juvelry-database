@@ -57,34 +57,6 @@ if (isset($_POST['save_product'])) {
 
 
 
-    
-    // Debug output
-    echo "<div class='alert alert-info'>";
-    echo "<h4>Debug Information</h4>";
-    echo "<p>Manufacturer ID being used: <strong>" . htmlspecialchars($manufacturer_id) . "</strong></p>";
-    
-    // Check if this manufacturer exists
-    $check_manufacturer = "SELECT COUNT(*) as count FROM gamintojas WHERE gamintojo_id = ?";
-    $stmt = $conn->prepare($check_manufacturer);
-    $stmt->bind_param("s", $manufacturer_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    $row = $result->fetch_assoc();
-    
-    echo "<p>Manufacturer exists in database: <strong>" . ($row['count'] > 0 ? 'Yes' : 'No') . "</strong></p>";
-    
-    // Display some available manufacturers
-    $available_manufacturers = "SELECT gamintojo_id, pavadinimas FROM gamintojas LIMIT 10";
-    $result = $conn->query($available_manufacturers);
-    
-    echo "<p>Available manufacturers (first 10):</p><ul>";
-    while ($row = $result->fetch_assoc()) {
-        echo "<li>" . htmlspecialchars($row['gamintojo_id']) . " - " . htmlspecialchars($row['pavadinimas']) . "</li>";
-    }
-    echo "</ul>";
-    echo "</div>";
-
-
     // Get inventory items from form
     $inventory_ids = isset($_POST['inventory_id']) ? $_POST['inventory_id'] : [];
     $inventory_quantities = isset($_POST['inventory_quantity']) ? $_POST['inventory_quantity'] : [];
