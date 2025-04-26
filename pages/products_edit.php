@@ -55,11 +55,13 @@ if (isset($_POST['save_product'])) {
     $category_id = $_POST['category_id'];
     $manufacturer_id = $_POST['manufacturer_id'];
 
-
-
     // Get inventory items from form
     $inventory_ids = isset($_POST['inventory_id']) ? $_POST['inventory_id'] : [];
     $inventory_quantities = isset($_POST['inventory_quantity']) ? $_POST['inventory_quantity'] : [];
+    
+    // Debug: Log the inventory data
+    error_log("Inventory IDs: " . print_r($inventory_ids, true));
+    error_log("Inventory Quantities: " . print_r($inventory_quantities, true));
     
     // Start transaction
     $conn->begin_transaction();
@@ -78,13 +80,17 @@ if (isset($_POST['save_product'])) {
             
             // Handle inventory items
             foreach ($inventory_ids as $index => $inv_id) {
+                // Debug
+                error_log("Processing inventory index: $index, ID: $inv_id, Quantity: " . (isset($inventory_quantities[$index]) ? $inventory_quantities[$index] : 'not set'));
+                
                 if (empty($inv_id)) {
                     // This is a new inventory item
-                    if (!empty($inventory_quantities[$index])) {
+                    if (isset($inventory_quantities[$index]) && $inventory_quantities[$index] !== '') {
                         $insert_inventory = "INSERT INTO sandeliuojama_preke (kiekis, fk_PREKEid) VALUES (?, ?)";
                         $stmt = $conn->prepare($insert_inventory);
                         $stmt->bind_param("is", $inventory_quantities[$index], $product_id);
                         $stmt->execute();
+                        error_log("Inserted new inventory: " . $inventory_quantities[$index]);
                     }
                 } else {
                     // This is an existing inventory item
@@ -94,12 +100,14 @@ if (isset($_POST['save_product'])) {
                         $stmt = $conn->prepare($delete_inventory);
                         $stmt->bind_param("i", $inv_id);
                         $stmt->execute();
+                        error_log("Deleted inventory ID: " . $inv_id);
                     } else {
                         // Update this inventory item
                         $update_inventory = "UPDATE sandeliuojama_preke SET kiekis = ? WHERE id_SANDELIUOJAMA_PREKE = ?";
                         $stmt = $conn->prepare($update_inventory);
                         $stmt->bind_param("ii", $inventory_quantities[$index], $inv_id);
                         $stmt->execute();
+                        error_log("Updated inventory ID: " . $inv_id . " with quantity: " . $inventory_quantities[$index]);
                     }
                 }
             }
@@ -117,12 +125,12 @@ if (isset($_POST['save_product'])) {
                 throw new Exception("Product ID already exists. Please use a different ID.");
             }
             
-            // Insert new product
+            // Insert new product (ONLY ONCE)
             $insert_query = "INSERT INTO preke (id, pavadinimas, aprasymas, kaina, svoris, medziaga, 
                             fk_GAMINTOJASgamintojo_id, fk_KATEGORIJAid_KATEGORIJA) 
                             VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($insert_query);
-            $stmt->bind_param("sssddsss", $new_product_id, $product_name, $product_description, 
+            $stmt->bind_param("sssddssi", $new_product_id, $product_name, $product_description, 
                              $product_price, $product_weight, $product_material, 
                              $manufacturer_id, $category_id);
             $stmt->execute();
@@ -130,13 +138,27 @@ if (isset($_POST['save_product'])) {
             // Set product_id for inventory inserts
             $product_id = $new_product_id;
             
-            // Insert new inventory items
-            foreach ($inventory_quantities as $quantity) {
-                if (!empty($quantity)) {
+            // Debug: Count inventory items being processed
+            error_log("Processing " . count($inventory_quantities) . " inventory items");
+            
+            // Insert new inventory items (after the product is inserted)
+            // Fixed: Make sure we use keys and values explicitly
+            foreach ($inventory_quantities as $index => $quantity) {
+                error_log("Processing inventory index $index with quantity: $quantity");
+                
+                if ($quantity !== '' && $quantity !== null) {
                     $insert_inventory = "INSERT INTO sandeliuojama_preke (kiekis, fk_PREKEid) VALUES (?, ?)";
                     $stmt = $conn->prepare($insert_inventory);
                     $stmt->bind_param("is", $quantity, $product_id);
-                    $stmt->execute();
+                    $result = $stmt->execute();
+                    
+                    if ($result) {
+                        error_log("Successfully inserted inventory item with quantity: $quantity");
+                    } else {
+                        error_log("Failed to insert inventory item: " . $conn->error);
+                    }
+                } else {
+                    error_log("Skipping empty quantity at index $index");
                 }
             }
         }
@@ -149,7 +171,7 @@ if (isset($_POST['save_product'])) {
         
         // Reload page with the saved product ID if we're adding a new product
         if (!$is_edit_mode) {
-            header("Location: product_edit.php?id=" . $new_product_id . "&success=1");
+            header("Location: products_edit.php?id=" . $new_product_id . "&success=1");
             exit;
         }
         
@@ -179,6 +201,7 @@ if (isset($_POST['save_product'])) {
         // Rollback transaction on error
         $conn->rollback();
         $error_message = "Error: " . $e->getMessage();
+        error_log("Transaction error: " . $e->getMessage());
     }
 }
 
