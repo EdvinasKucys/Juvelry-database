@@ -10,12 +10,12 @@ if(isset($_GET['delete'])) {
     $conn->begin_transaction();
     
     try {
-        // First delete any inventory records associated with this product
-        $delete_inventory_query = "DELETE FROM sandeliuojama_preke WHERE fk_PREKEid = ?";
-        $stmt = $conn->prepare($delete_inventory_query);
+        // First delete any category relationships
+        $delete_categories_query = "DELETE FROM preke_kategorija WHERE fk_PREKEid = ?";
+        $stmt = $conn->prepare($delete_categories_query);
         $stmt->bind_param("s", $id_to_delete);
         $stmt->execute();
-        $inventory_affected = $stmt->affected_rows;
+        $categories_affected = $stmt->affected_rows;
         $stmt->close();
         
         // Then delete the product itself
@@ -31,8 +31,8 @@ if(isset($_GET['delete'])) {
         
         if($product_affected > 0) {
             $delete_message = "Product deleted successfully";
-            if($inventory_affected > 0) {
-                $delete_message .= " along with " . $inventory_affected . " inventory records";
+            if($categories_affected > 0) {
+                $delete_message .= " along with " . $categories_affected . " category relationships";
             }
         } else {
             $delete_error = "Product not found or already deleted";
@@ -44,14 +44,20 @@ if(isset($_GET['delete'])) {
     }
 }
 
-// Fetch products with category and manufacturer info
-// Updated to show total stock and manufacturer count for each product
-$query = "SELECT p.id, p.pavadinimas as product_name, p.kaina, p.medziaga, 
-          k.pavadinimas as category_name, g.pavadinimas as manufacturer_name,
-          (SELECT SUM(kiekis) FROM sandeliuojama_preke WHERE fk_PREKEid = p.id) as total_stock,
-          (SELECT COUNT(DISTINCT fk_GAMINTOJASgamintojo_id) FROM sandeliuojama_preke WHERE fk_PREKEid = p.id) as manufacturer_count
+// Fetch products with manufacturer and category info
+$query = "SELECT p.id, p.pavadinimas, p.kaina, p.svoris, p.medziaga, 
+          g.pavadinimas as manufacturer_name, 
+          (SELECT COUNT(*) FROM preke_kategorija WHERE fk_PREKEid = p.id) as category_count,
+          (SELECT GROUP_CONCAT(k.pavadinimas SEPARATOR ', ') 
+           FROM preke_kategorija pc
+           JOIN kategorija k ON pc.fk_KATEGORIJAid_KATEGORIJA = k.id_KATEGORIJA
+           WHERE pc.fk_PREKEid = p.id) as categories,
+          (SELECT k.pavadinimas 
+           FROM preke_kategorija pc
+           JOIN kategorija k ON pc.fk_KATEGORIJAid_KATEGORIJA = k.id_KATEGORIJA
+           WHERE pc.fk_PREKEid = p.id AND pc.pagrindine_kategorija = TRUE
+           LIMIT 1) as primary_category
           FROM preke p 
-          JOIN kategorija k ON p.fk_KATEGORIJAid_KATEGORIJA = k.id_KATEGORIJA
           JOIN gamintojas g ON p.fk_GAMINTOJASgamintojo_id = g.gamintojo_id
           ORDER BY p.id";
           
@@ -70,50 +76,82 @@ $result = $conn->query($query);
     <?php endif; ?>
     
     <div class="d-flex justify-content-end mb-3">
-        <a href="products_edit.php" class="btn btn-primary">Add New Product</a>
+        <a href="products_edit.php" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> Add New Product
+        </a>
     </div>
     
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Product Name</th>
-                <th>Price</th>
-                <th>Material</th>
-                <th>Category</th>
-                <th>Product Mfr.</th>
-                <th>Total Stock</th>
-                <th>Mfr. Count</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if($result->num_rows > 0): ?>
-                <?php while($row = $result->fetch_assoc()): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($row['id']); ?></td>
-                        <td><?php echo htmlspecialchars($row['product_name']); ?></td>
-                        <td><?php echo htmlspecialchars($row['kaina']); ?></td>
-                        <td><?php echo htmlspecialchars($row['medziaga']); ?></td>
-                        <td><?php echo htmlspecialchars($row['category_name']); ?></td>
-                        <td><?php echo htmlspecialchars($row['manufacturer_name']); ?></td>
-                        <td><?php echo htmlspecialchars($row['total_stock'] ?? 0); ?></td>
-                        <td><?php echo htmlspecialchars($row['manufacturer_count'] ?? 0); ?></td>
-                        <td>
-                            <a href="products_edit.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-warning">Edit</a>
-                            <a href="products.php?delete=<?php echo $row['id']; ?>" class="btn btn-sm btn-danger" 
-                               onclick="return confirm('Are you sure you want to delete this product?')">Delete</a>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-            <?php else: ?>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
                 <tr>
-                    <td colspan="9" class="text-center">No products found</td>
+                    <th>ID</th>
+                    <th>Product Name</th>
+                    <th>Price</th>
+                    <th>Weight</th>
+                    <th>Material</th>
+                    <th>Manufacturer</th>
+                    <th>Primary Category</th>
+                    <th>All Categories</th>
+                    <th>Actions</th>
                 </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                <?php if($result && $result->num_rows > 0): ?>
+                    <?php while($row = $result->fetch_assoc()): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($row['id']); ?></td>
+                            <td><?php echo htmlspecialchars($row['pavadinimas']); ?></td>
+                            <td><?php echo number_format($row['kaina'], 2); ?> €</td>
+                            <td><?php echo number_format($row['svoris'], 2); ?> g</td>
+                            <td><?php echo htmlspecialchars($row['medziaga'] ?? ''); ?></td>
+                            <td><?php echo htmlspecialchars($row['manufacturer_name']); ?></td>
+                            <td>
+                                <?php if($row['primary_category']): ?>
+                                    <span class="badge bg-primary"><?php echo htmlspecialchars($row['primary_category']); ?></span>
+                                <?php else: ?>
+                                    <span class="text-muted">None</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php 
+                                if($row['categories']): 
+                                    $category_array = explode(', ', $row['categories']);
+                                    foreach($category_array as $cat): 
+                                ?>
+                                    <span class="badge bg-secondary category-badge"><?php echo htmlspecialchars($cat); ?></span>
+                                <?php 
+                                    endforeach;
+                                else: 
+                                ?>
+                                    <span class="text-muted">None</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <a href="products_edit.php?id=<?php echo urlencode($row['id']); ?>" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <a href="products.php?delete=<?php echo urlencode($row['id']); ?>" class="btn btn-sm btn-danger" 
+                                   onclick="return confirm('Are you sure you want to delete this product?')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
+                            </td>
+                        </tr>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="9" class="text-center">No products found</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
+
+<!-- Bootstrap JS and Popper.js -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
 
 <?php
 $conn->close();

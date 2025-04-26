@@ -7,7 +7,7 @@ if(isset($_GET['delete'])) {
     $id_to_delete = $_GET['delete'];
     
     // Check if category is used in any products
-    $check_query = "SELECT COUNT(*) as count FROM preke WHERE fk_KATEGORIJAid_KATEGORIJA = ?";
+    $check_query = "SELECT COUNT(*) as count FROM preke_kategorija WHERE fk_KATEGORIJAid_KATEGORIJA = ?";
     $check_stmt = $conn->prepare($check_query);
     $check_stmt->bind_param("i", $id_to_delete);
     $check_stmt->execute();
@@ -15,7 +15,7 @@ if(isset($_GET['delete'])) {
     $row = $result->fetch_assoc();
     
     if($row['count'] > 0) {
-        $delete_error = "Cannot delete category because it is used in " . $row['count'] . " products. Remove those products first.";
+        $delete_error = "Cannot delete category because it is used in " . $row['count'] . " product relationships. Remove those relationships first.";
     } else {
         $delete_query = "DELETE FROM kategorija WHERE id_KATEGORIJA = ?";
         $stmt = $conn->prepare($delete_query);
@@ -77,7 +77,10 @@ if($edit_id > 0) {
 }
 
 // Fetch all categories
-$query = "SELECT * FROM kategorija ORDER BY id_KATEGORIJA";
+$query = "SELECT k.*, 
+          (SELECT COUNT(*) FROM preke_kategorija WHERE fk_KATEGORIJAid_KATEGORIJA = k.id_KATEGORIJA) as product_count,
+          (SELECT COUNT(*) FROM preke_kategorija WHERE fk_KATEGORIJAid_KATEGORIJA = k.id_KATEGORIJA AND pagrindine_kategorija = TRUE) as primary_count
+          FROM kategorija k ORDER BY k.id_KATEGORIJA";
 $result = $conn->query($query);
 ?>
 
@@ -144,6 +147,8 @@ $result = $conn->query($query);
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>Description</th>
+                                <th>Product Count</th>
+                                <th>Primary Count</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -154,6 +159,8 @@ $result = $conn->query($query);
                                         <td><?php echo $row['id_KATEGORIJA']; ?></td>
                                         <td><?php echo htmlspecialchars($row['pavadinimas']); ?></td>
                                         <td><?php echo htmlspecialchars($row['aprasymas'] ?? ''); ?></td>
+                                        <td><?php echo $row['product_count']; ?></td>
+                                        <td><?php echo $row['primary_count']; ?></td>
                                         <td>
                                             <a href="categories.php?edit=<?php echo $row['id_KATEGORIJA']; ?>" class="btn btn-sm btn-warning">Edit</a>
                                             <a href="categories.php?delete=<?php echo $row['id_KATEGORIJA']; ?>" class="btn btn-sm btn-danger"
@@ -163,7 +170,7 @@ $result = $conn->query($query);
                                 <?php endwhile; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="4" class="text-center">No categories found</td>
+                                    <td colspan="6" class="text-center">No categories found</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -173,6 +180,11 @@ $result = $conn->query($query);
         </div>
     </div>
 </div>
+
+<!-- Bootstrap JS and Popper.js -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
 
 <?php
 $conn->close();

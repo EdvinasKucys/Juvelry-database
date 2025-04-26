@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Product Inventory System</title>
+    <title>Jewelry Inventory System</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome for icons -->
@@ -14,7 +14,7 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="/juvelyrika/">Inventory System</a>
+            <a class="navbar-brand" href="/juvelyrika/">Jewelry Inventory</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -31,9 +31,6 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="/juvelyrika/pages/products.php">Products</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/juvelyrika/pages/inventory.php">Inventory</a>
                     </li>
                 </ul>
             </div>

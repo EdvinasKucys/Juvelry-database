@@ -3,7 +3,7 @@
 $host = "localhost";
 $username = "root";  // Change as needed
 $password = "";      // Change as needed
-$database = "juvelyrika_smol";  // Your database name
+$database = "juvelyrika_2";  // Your database name
 
 // Create connection
 $conn = new mysqli($host, $username, $password, $database);

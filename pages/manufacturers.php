@@ -91,8 +91,9 @@ if(!empty($edit_id)) {
     }
 }
 
-// Fetch all manufacturers
-$query = "SELECT * FROM gamintojas ORDER BY gamintojo_id";
+// Fetch all manufacturers with product count
+$query = "SELECT g.*, (SELECT COUNT(*) FROM preke WHERE fk_GAMINTOJASgamintojo_id = g.gamintojo_id) as product_count 
+          FROM gamintojas g ORDER BY g.gamintojo_id";
 $result = $conn->query($query);
 ?>
 
@@ -174,6 +175,7 @@ $result = $conn->query($query);
                                 <th>Name</th>
                                 <th>Country</th>
                                 <th>Contacts</th>
+                                <th>Products</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -185,6 +187,7 @@ $result = $conn->query($query);
                                         <td><?php echo htmlspecialchars($row['pavadinimas']); ?></td>
                                         <td><?php echo htmlspecialchars($row['salis'] ?? ''); ?></td>
                                         <td><?php echo htmlspecialchars($row['kontaktai']); ?></td>
+                                        <td><?php echo $row['product_count']; ?></td>
                                         <td>
                                             <a href="manufacturers.php?edit=<?php echo urlencode($row['gamintojo_id']); ?>" class="btn btn-sm btn-warning">Edit</a>
                                             <a href="manufacturers.php?delete=<?php echo urlencode($row['gamintojo_id']); ?>" class="btn btn-sm btn-danger"
@@ -194,7 +197,7 @@ $result = $conn->query($query);
                                 <?php endwhile; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="5" class="text-center">No manufacturers found</td>
+                                    <td colspan="6" class="text-center">No manufacturers found</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
@@ -204,6 +207,11 @@ $result = $conn->query($query);
         </div>
     </div>
 </div>
+
+<!-- Bootstrap JS and Popper.js -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
 
 <?php
 $conn->close();
